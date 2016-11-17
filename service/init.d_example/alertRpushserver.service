@@ -1,0 +1,14 @@
+# example unit file when systemd is used
+
+[Unit]
+Description=alertR Push Server
+After=mysql.service
+
+[Service]
+Type=simple
+ExecStart=/etc/init.d/alertRpushserver.sh start
+ExecStop=/etc/init.d/alertRpushserver.sh stop
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
