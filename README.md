@@ -1,4 +1,4 @@
-# alertR-Push-Server
+# alertR Push Server
 
 The push server component of the [alertR alarm and monitoring system](https://github.com/sqall01/alertR). The service can be used by registering an account at [alertr.de](https://alertr.de) and following the setup instructions. If you are searching for a detailed description of the push service design, please read the pages in the official alertR [Github Wiki](https://github.com/sqall01/alertR/wiki/Infrastructure#infrastructure_push).
 
