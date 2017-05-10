@@ -26,6 +26,9 @@ function output_password_form($token) {
         . '<br />'
         . 'At least: 1 lower letter'
         . '</p>';
+    echo '<p>Allowed special characters: '
+        . '- _ , ! $ ? + ( ) [ ] { } %'
+        . '</p>';
     echo '<form action="index.php?reg_token='
         . $token
         . '" method="POST">';
