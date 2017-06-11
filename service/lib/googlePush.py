@@ -50,9 +50,11 @@ class VerifiedHTTPSConnection(http.client.HTTPSConnection):
 
 class GoogleFirebase:
 
-    def __init__(self, global_data, client_addr, client_port):
+    def __init__(self, global_data, storage, username, client_addr, client_port):
         self.client_addr = client_addr
         self.client_port = client_port
+        self.username = username
+        self.storage = storage
 
         # File name of this file (used for logging).
         self.file_name = os.path.basename(__file__)
@@ -63,27 +65,12 @@ class GoogleFirebase:
         self.google_cert_file = self.global_data.google_cert_file
         self.google_auth_key = self.global_data.google_auth_key
 
-    def send_notification(self, channel, data):
+    def _send_message(self, message):
 
         # Build message header.
         headers = {
             "Content-Type": "application/json",
             "Authorization": self.google_auth_key
-        }
-
-        # Build message body.
-        payload = {"payload": data}
-
-        # Check if message is too large (2039 tested empirically).
-        if len(json.dumps(payload)) >= 2039:
-            self.logger.error("[%s]: Sending message to google service " % self.file_name +
-                              "failed (%s:%d)." % (self.client_addr, self.client_port))
-            return ErrorCodes.GOOGLE_MSG_TOO_LARGE
-
-        message = {
-            "to": "/topics/" + channel,
-            "data": payload,
-            "priority": "high"
         }
 
         # Send message to google service.
@@ -122,3 +109,57 @@ class GoogleFirebase:
 
         self.logger.error("[%s]: Returned error unknown: %d %s " % (self.file_name, status, recv_string))
         return ErrorCodes.GOOGLE_UNKNOWN
+
+    # Function that sends the received data directly via Google Firebase.
+    def _send_data_direct(self, channel, data):
+
+        # Build message body.
+        payload = {"payload": data}
+
+        message = {
+            "to": "/topics/" + channel,
+            "data": payload,
+            "priority": "high"
+        }
+
+        self.logger.debug("[%s]: Sending message directly to google service " % self.file_name +
+                          "(%s:%d)." % (self.client_addr, self.client_port))
+
+        return self._send_message(message)
+
+    # Function that sends an id via Google Firebase and holds the data in order
+    # to have the client fetching the data.
+    def _send_data_indirect(self, channel, data):
+
+        data_id, error = self.storage.insert_push_data(self.username, data, self.logger)
+        if error != ErrorCodes.NO_ERROR:
+            return error
+
+        # Build message body.
+        payload = {"payload": "",
+                   "data_id": data_id}
+
+        message = {
+            "to": "/topics/" + channel,
+            "data": payload,
+            "priority": "high"
+        }
+
+        self.logger.debug("[%s]: Sending message with data id '%s' to google service " % (self.file_name, data_id) +
+                          "(%s:%d)." % (self.client_addr, self.client_port))
+
+        return self._send_message(message)
+
+    # Sends push message via Google Firebase.
+    def send_notification(self, channel, data):
+
+        # Build message body.
+        payload = {"payload": data}
+
+        # Check if message is too large (2039 tested empirically).
+        if len(json.dumps(payload)) >= 2039:
+            return self._send_data_indirect(channel, data)
+
+        # Payload is small enough to be sent directly via Google Firebase.
+        else:
+            return self._send_data_direct(channel, data)
