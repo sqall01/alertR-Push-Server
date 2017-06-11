@@ -99,44 +99,52 @@ if($mysqli->connect_errno) {
 }
 
 $create_users_table = "CREATE TABLE IF NOT EXISTS users ("
-    . "id INTEGER PRIMARY KEY AUTO_INCREMENT, "
+    . "id INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT, "
     . "email VARCHAR(255) NOT NULL UNIQUE, "
     . "active BOOLEAN NOT NULL)";
 
 $create_acl_table = "CREATE TABLE IF NOT EXISTS acl ("
-    . "users_id INTEGER NOT NULL, "
-    . "acl INTEGER NOT NULL, "
+    . "users_id INTEGER UNSIGNED NOT NULL, "
+    . "acl INTEGER UNSIGNED NOT NULL, "
     . "PRIMARY KEY(users_id, acl), "
     . "FOREIGN KEY(users_id) REFERENCES users(id))";
 
 $create_tokens_table = "CREATE TABLE IF NOT EXISTS tokens ("
-    . "users_id INTEGER PRIMARY KEY, "
+    . "users_id INTEGER UNSIGNED PRIMARY KEY, "
     . "token VARCHAR(255) NOT NULL, "
-    . "timestamp INTEGER NOT NULL, "
-    . "expiration INTEGER NOT NULL, "
+    . "timestamp INTEGER UNSIGNED NOT NULL, "
+    . "expiration INTEGER UNSIGNED NOT NULL, "
     . "FOREIGN KEY(users_id) REFERENCES users(id))";
 
 $create_passwords_table = "CREATE TABLE IF NOT EXISTS passwords ("
-    . "users_id INTEGER PRIMARY KEY, "
+    . "users_id INTEGER UNSIGNED PRIMARY KEY, "
     . "password_hash VARCHAR(255) NOT NULL, "
     . "FOREIGN KEY(users_id) REFERENCES users(id))";
 
 $create_bf_info_table = "CREATE TABLE IF NOT EXISTS bruteforce_info ("
-    . "id INTEGER PRIMARY KEY AUTO_INCREMENT, "
-    . "users_id INTEGER NOT NULL, "
+    . "id INTEGER UNSIGNED PRIMARY KEY AUTO_INCREMENT, "
+    . "users_id INTEGER UNSIGNED NOT NULL, "
     . "addr VARCHAR(255) NOT NULL, "
-    . "counter INTEGER NOT NULL, "
-    . "last_attempt INTEGER NOT NULL, "
-    . "blocked_until INTEGER NOT NULL, "
+    . "counter INTEGER UNSIGNED NOT NULL, "
+    . "last_attempt INTEGER UNSIGNED NOT NULL, "
+    . "blocked_until INTEGER UNSIGNED NOT NULL, "
     . "FOREIGN KEY(users_id) REFERENCES users(id))";
 
 $create_statistics_send_table = "CREATE TABLE IF NOT EXISTS statistics_send ("
-    . "id INTEGER AUTO_INCREMENT, "
-    . "users_id INTEGER NOT NULL, "
+    . "id INTEGER UNSIGNED AUTO_INCREMENT, "
+    . "users_id INTEGER UNSIGNED NOT NULL, "
     . "addr VARCHAR(255) NOT NULL, "
     . "channel VARCHAR(255) NOT NULL, "
-    . "timestamp INTEGER NOT NULL, "
+    . "timestamp INTEGER UNSIGNED NOT NULL, "
     . "PRIMARY KEY(id, users_id, timestamp), "
+    . "FOREIGN KEY(users_id) REFERENCES users(id))";
+
+$create_push_data_table = "CREATE TABLE IF NOT EXISTS push_data ("
+    . "id CHAR(20), "
+    . "users_id INTEGER UNSIGNED NOT NULL, "
+    . "data TEXT NOT NULL, "
+    . "timestamp INTEGER UNSIGNED NOT NULL, "
+    . "PRIMARY KEY(id, users_id), "
     . "FOREIGN KEY(users_id) REFERENCES users(id))";
 
 if($mysqli->query($create_users_table) !== TRUE
@@ -144,7 +152,8 @@ if($mysqli->query($create_users_table) !== TRUE
     || $mysqli->query($create_tokens_table) !== TRUE
     || $mysqli->query($create_passwords_table) !== TRUE
     || $mysqli->query($create_bf_info_table) !== TRUE
-    || $mysqli->query($create_statistics_send_table) !== TRUE) {
+    || $mysqli->query($create_statistics_send_table) !== TRUE
+    || $mysqli->query($create_push_data_table) !== TRUE) {
     die("Error: Database table check.");
 }
 
