@@ -7,8 +7,7 @@
 //
 // Licensed under the GNU Public License, version 2.
 
-// mysql db credentials that are needed to access the information
-// that is gathered by the manager client mobile
+// mysql db credentials that are needed to access the data
 $config_mysql_db = "alertr_push";
 $config_mysql_username = "alertr_push";
 $config_mysql_password = "<SECRET>";
