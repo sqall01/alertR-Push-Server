@@ -11,8 +11,8 @@ import MySQLdb
 import os
 import time
 import datetime
-import threading
 import bcrypt
+import random
 from .globalData import ErrorCodes
 
 
@@ -64,7 +64,7 @@ class Mysql(object):
                 self._cursor = self._conn.cursor()
                 break
 
-            except Exception as e:
+            except:
 
                 # Re-throw the exception if we reached our retry limit.
                 if current_try >= self.mysql_connection_retries:
@@ -89,7 +89,7 @@ class Mysql(object):
         try:
             self._open_connection()
             self._close_connection()
-        except Exception as e:
+        except:
             return False
         return True
 
@@ -110,7 +110,7 @@ class Mysql(object):
 
             user_id = result[0][0]
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to get user id." % self.file_name)
 
             return None, ErrorCodes.DATABASE_ERROR
@@ -139,7 +139,7 @@ class Mysql(object):
             # Commit all changes.
             self._conn.commit()
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to clean up bruteforce tables." % self.file_name)
 
             return False, ErrorCodes.DATABASE_ERROR
@@ -168,7 +168,7 @@ class Mysql(object):
             if len(result) != 0:
                 return False, ErrorCodes.NO_ERROR
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to check bruteforce table." % self.file_name)
 
             return False, ErrorCodes.DATABASE_ERROR
@@ -210,7 +210,7 @@ class Mysql(object):
 
             password_hash = result[0][0]
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to get password hash." % self.file_name)
 
             return False, ErrorCodes.DATABASE_ERROR
@@ -261,7 +261,7 @@ class Mysql(object):
                 # Commit all changes.
                 self._conn.commit()
 
-            except Exception as e:
+            except:
                 logger.exception("[%s]: Not able to update bruteforce data." % self.file_name)
 
                 return False, ErrorCodes.DATABASE_ERROR
@@ -294,7 +294,7 @@ class Mysql(object):
                                  "VALUES (%s, %s, %s, %s)",
                                  (user_id, ip_addr, channel, utc_timestamp))
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to update send statistics data." % self.file_name)
 
             return ErrorCodes.DATABASE_ERROR
@@ -307,7 +307,7 @@ class Mysql(object):
 
         return ErrorCodes.NO_ERROR
 
-    def clean_up_statistics_table(self, db_cleaner_sleep_timer, logger=None):
+    def clean_up_push_data_table(self, push_data_life_span, logger=None):
 
         # Set logger instance to use.
         if not logger:
@@ -317,7 +317,38 @@ class Mysql(object):
         self._open_connection(logger)
 
         utc_timestamp = int(time.time())
-        clean_up_time = utc_timestamp - (db_cleaner_sleep_timer * 86400)
+        clean_up_time = utc_timestamp - (push_data_life_span * 86400)
+
+        # Delete older push data entries.
+        try:
+            self._cursor.execute("DELETE FROM push_data " +
+                                 "WHERE timestamp < %s",
+                                 (clean_up_time,))
+
+        except:
+            logger.exception("[%s]: Not able to clean up push data." % self.file_name)
+
+            return ErrorCodes.DATABASE_ERROR
+
+        # Commit all changes.
+        self._conn.commit()
+
+        # Close connection to the database.
+        self._close_connection()
+
+        return ErrorCodes.NO_ERROR
+
+    def clean_up_statistics_table(self, statistics_life_span, logger=None):
+
+        # Set logger instance to use.
+        if not logger:
+            logger = self.logger
+
+        # Connect to the database.
+        self._open_connection(logger)
+
+        utc_timestamp = int(time.time())
+        clean_up_time = utc_timestamp - (statistics_life_span * 86400)
 
         # Delete older statistics entries.
         try:
@@ -325,7 +356,7 @@ class Mysql(object):
                                  "WHERE timestamp < %s",
                                  (clean_up_time, ))
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to clean up statistics data." % self.file_name)
 
             return ErrorCodes.DATABASE_ERROR
@@ -359,7 +390,7 @@ class Mysql(object):
 
             user_ids = map(lambda x: x[0], result)
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to clean up token data." % self.file_name)
 
             return ErrorCodes.DATABASE_ERROR
@@ -373,7 +404,7 @@ class Mysql(object):
                                      "WHERE users_id = %s",
                                      (user_id, ))
 
-            except Exception as e:
+            except:
                 logger.exception("[%s]: Not able to clean up tokens." % self.file_name)
 
                 return ErrorCodes.DATABASE_ERROR
@@ -387,7 +418,7 @@ class Mysql(object):
 
             user_ids = map(lambda x: x[0], result)
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to clean up user data." % self.file_name)
 
             return ErrorCodes.DATABASE_ERROR
@@ -406,11 +437,37 @@ class Mysql(object):
 
                 logger.debug("[%s]: Delete inactive user with id %d." % (self.file_name, user_id))
 
+                # Delete push_data of user.
+                self._cursor.execute("DELETE FROM push_data " +
+                                     "WHERE users_id = %s",
+                                     (user_id, ))
+
+                # Delete bruteforce_info of user.
+                self._cursor.execute("DELETE FROM bruteforce_info " +
+                                     "WHERE users_id = %s",
+                                     (user_id, ))
+
+                # Delete statistics_send of user.
+                self._cursor.execute("DELETE FROM statistics_send " +
+                                     "WHERE users_id = %s",
+                                     (user_id, ))
+
+                # Delete password of user.
+                self._cursor.execute("DELETE FROM passwords " +
+                                     "WHERE users_id = %s",
+                                     (user_id, ))
+
+                # Delete acl of user.
+                self._cursor.execute("DELETE FROM acl " +
+                                     "WHERE users_id = %s",
+                                     (user_id, ))
+
+                # Delete user.
                 self._cursor.execute("DELETE FROM users " +
                                      "WHERE id = %s",
                                      (user_id, ))
 
-            except Exception as e:
+            except:
                 logger.exception("[%s]: Not able to clean up users." % self.file_name)
 
                 return ErrorCodes.DATABASE_ERROR
@@ -447,7 +504,7 @@ class Mysql(object):
 
             acl = map(lambda x: x[0], result)
 
-        except Exception as e:
+        except:
             logger.exception("[%s]: Not able to clean up token data." % self.file_name)
 
             return [], ErrorCodes.DATABASE_ERROR
@@ -457,53 +514,56 @@ class Mysql(object):
 
         return acl, ErrorCodes.NO_ERROR
 
+    def insert_push_data(self, username, data, logger=None):
 
-class DatabaseCleaner(threading.Thread):
+        # Set logger instance to use.
+        if not logger:
+            logger = self.logger
 
-    def __init__(self, global_data):
-        threading.Thread.__init__(self)
+        # Connect to the database.
+        self._open_connection(logger)
 
-        # File name of this file (used for logging).
-        self.file_name = os.path.basename(__file__)
+        # Get user id for username.
+        user_id, error = self._get_user_id(username, logger)
+        if not user_id:
+            return None, error
 
-        # Get global configured data.
-        self.global_data = global_data
-        self.logger = self.global_data.logger
-        self.db_cleaner_sleep_timer = self.global_data.db_cleaner_sleep_timer
-        self.statistics_life_span = self.global_data.statistics_life_span
-
-        self.storage = Mysql(self.global_data)
-
-        # Flag that indicates that the thread should be terminated.
-        self.running = True
-
-    def run(self):
-
-        # Clean up statistics table one time during start up directly.
-        self.storage.clean_up_statistics_table(self.statistics_life_span)
-
-        # Clean up users and tokens table.
-        self.storage.clean_up_users()
-
+        # Generate random id for data.
+        data_id = None
         while True:
+            data_id = ''.join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+                              for _ in range(20))
+            try:
+                self._cursor.execute("SELECT * FROM push_data WHERE id = %s",
+                                     (data_id, ))
 
-            self.logger.debug("[%s]: Cleaning up database." % self.file_name)
+                result = self._cursor.fetchall()
 
-            # Clean up statistics table.
-            if self.statistics_life_span != 0:
-                self.storage.clean_up_statistics_table(self.statistics_life_span)
+                if len(result) == 0:
+                    break
 
-            # Clean up users and tokens table.
-            self.storage.clean_up_users()
+            except:
+                logger.exception("[%s]: Not able to generate data id." % self.file_name)
 
-            # Sleep until next run.
-            counter = 0
-            while counter < self.db_cleaner_sleep_timer:
-                time.sleep(1)
-                if not self.running:
-                    self.logger.info("[%s]: Database cleaning thread stopped." % self.file_name)
-                    return
-                counter += 1
+                return None, ErrorCodes.DATABASE_ERROR
 
-    def shutdown(self):
-        self.running = False
+        # Store data in database.
+        utc_timestamp = int(time.time())
+        try:
+            self._cursor.execute("INSERT INTO push_data " +
+                                 "(id, users_id, data, timestamp) " +
+                                 "VALUES (%s, %s, %s, %s)",
+                                 (data_id, user_id, data, utc_timestamp))
+
+        except:
+            logger.exception("[%s]: Not able to generate data id." % self.file_name)
+
+            return None, ErrorCodes.DATABASE_ERROR
+
+        # Commit all changes.
+        self._conn.commit()
+
+        # Close connection to the database.
+        self._close_connection()
+
+        return data_id, ErrorCodes.NO_ERROR

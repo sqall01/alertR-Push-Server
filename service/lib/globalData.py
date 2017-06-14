@@ -77,10 +77,16 @@ class GlobalData:
         self.google_cert_file = None
 
         # Amount of days the statistics are kept in the database.
-        self.statistics_life_span = None
+        self.statistics_life_span = 0
+
+        # Amount of days the push data is kept in the database.
+        # Google Firebase stores messages for 28 days
+        # (https://firebase.google.com/docs/cloud-messaging/concept-options#ttl).
+        # Let us hold it one week longer just in case.
+        self.push_data_life_span = 35
 
         # Time the db cleaner thread should sleep before starting a new clean up run.
         self.db_cleaner_sleep_timer = 600
 
-        # Channel that is used to receive all devices that uses the service.
+        # Channel that is used to reach all devices that uses the service.
         self.notification_channel = "alertR_notification"

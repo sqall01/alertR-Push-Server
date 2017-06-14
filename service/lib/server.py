@@ -70,7 +70,7 @@ class ClientCommunication:
             if error_code == ErrorCodes.VERSION_MISSMATCH:
                 message["version"] = self.server_version
             self.ssl_socket.send(json.dumps(message).encode('ascii'))
-        except Exception as e:
+        except:
             pass
 
     def handle_communication(self):
@@ -82,7 +82,7 @@ class ClientCommunication:
         try:
             data = self.ssl_socket.recv(BUFSIZE)
             message = json.loads(data.decode("ascii"))
-        except Exception as e:
+        except:
             self.logger.exception("[%s]: Receiving data " % self.file_name +
                                   "failed (%s:%d)." % (self.client_addr, self.client_port))
             return
@@ -138,7 +138,7 @@ class ClientCommunication:
 
         # Send push notification to google service.
         notification_data = message["data"]
-        firebase = GoogleFirebase(self.global_data, self.client_addr, self.client_port)
+        firebase = GoogleFirebase(self.global_data, self.storage, username, self.client_addr, self.client_port)
         error = firebase.send_notification(channel, notification_data)
         if error != ErrorCodes.NO_ERROR:
             self._send_error(error)
@@ -155,7 +155,7 @@ class ClientCommunication:
         try:
             message = {"Code": ErrorCodes.NO_ERROR}
             self.ssl_socket.send(json.dumps(message).encode('ascii'))
-        except Exception as e:
+        except:
             pass
 
 
@@ -211,7 +211,7 @@ class ServerSession(socketserver.BaseRequestHandler):
                                               keyfile=self.server_key_file,
                                               ssl_version=ssl.PROTOCOL_TLSv1)
 
-        except Exception as e:
+        except:
             self.logger.exception("[%s]: Unable to initialize SSL " % self.file_name +
                                   "connection (%s:%d)." % (self.client_addr, self.client_port))
             return
@@ -224,7 +224,7 @@ class ServerSession(socketserver.BaseRequestHandler):
         try:
             # self.sslSocket.shutdown(socket.SHUT_RDWR)
             self.ssl_socket.close()
-        except Exception as e:
+        except:
             self.logger.exception("[%s]: Unable to close SSL " % self.file_name +
                                   "connection gracefully with %s:%d." % (self.client_addr, self.client_port))
 

@@ -9,7 +9,8 @@
 
 from lib import ServerSession, ForkedTCPServer
 from lib import GlobalData
-from lib import Mysql, DatabaseCleaner
+from lib import Mysql
+from lib import DatabaseCleaner
 import time
 import xml.etree.ElementTree
 import os
@@ -45,8 +46,8 @@ def make_path(input_location):
 
 
 # Shutdown server gracefully.
-def shutdown_server(server):
-    server.shutdown()
+def shutdown_server(server_obj):
+    server_obj.shutdown()
 
 
 # Signal handler to gracefully shutdown the server.
@@ -163,7 +164,7 @@ if __name__ == "__main__":
         if not storage_test.connection_test():
             raise ValueError("Database settings test failed.")
 
-    except Exception as e:
+    except:
         global_data.logger.exception("[%s]: Could not parse config." % file_name)
         sys.exit(1)
 
@@ -179,7 +180,7 @@ if __name__ == "__main__":
         try:
             server = ForkedTCPServer(global_data, ("0.0.0.0", port), ServerSession)
             break
-        except Exception as e:
+        except:
             global_data.logger.exception("[%s]: Starting server failed. " % file_name +
                                          "Try again in 5 seconds.")
             time.sleep(5)

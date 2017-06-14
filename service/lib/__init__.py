@@ -9,4 +9,5 @@
 
 from .server import ServerSession, ForkedTCPServer
 from .globalData import GlobalData
-from .storage import Mysql, DatabaseCleaner
+from .storage import Mysql
+from .storageCleaner import DatabaseCleaner
