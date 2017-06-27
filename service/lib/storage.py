@@ -12,7 +12,6 @@ import os
 import time
 import datetime
 import bcrypt
-import random
 from .globalData import ErrorCodes
 
 
@@ -530,9 +529,12 @@ class Mysql(object):
 
         # Generate random id for data.
         data_id = None
+        allowed_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        len_chars = len(allowed_chars)
         while True:
-            data_id = ''.join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
-                              for _ in range(20))
+            data_id = ""
+            for i in os.urandom(20):
+                data_id += allowed_chars[i % len_chars]
             try:
                 self._cursor.execute("SELECT * FROM push_data WHERE id = %s",
                                      (data_id, ))
