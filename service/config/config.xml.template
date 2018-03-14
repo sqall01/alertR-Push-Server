@@ -52,7 +52,7 @@
 				"key=AAAAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCCCCCC"
 		-->
 		<google
-			certFile="/etc/ssl/certs/GeoTrust_Global_CA.pem"
+			certFile="/etc/ssl/certs/GlobalSign_Root_CA_-_R2.pem"
 			authKey="key=AAAAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCCCCCC" />
 
 	</general>
