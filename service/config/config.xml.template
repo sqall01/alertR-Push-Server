@@ -45,14 +45,12 @@
 
 		<!--
 			the settings for the google firebase server
-			certFile - path to the certificate file used by the google servers
 			authKey - HTTP header entry that is needed for the authentication
 				at the google firebase servers. An entry has typically the
 				following form:
 				"key=AAAAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCCCCCC"
 		-->
 		<google
-			certFile="/etc/ssl/certs/GlobalSign_Root_CA_-_R2.pem"
 			authKey="key=AAAAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCCCCCC" />
 
 	</general>

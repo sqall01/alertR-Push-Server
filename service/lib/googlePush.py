@@ -12,40 +12,8 @@ import ssl
 import http.client
 import json
 import os
+import requests
 from .globalData import ErrorCodes
-
-
-# HTTPSConnection like class that verifies server certificates.
-class VerifiedHTTPSConnection(http.client.HTTPSConnection):
-    # needs socket and ssl lib
-    def __init__(self, host, port=None, servercert_file=None,
-                 key_file=None, cert_file=None, strict=None,
-                 timeout=socket._GLOBAL_DEFAULT_TIMEOUT):
-        http.client.HTTPSConnection.__init__(self,
-                                             host,
-                                             port,
-                                             key_file,
-                                             cert_file,
-                                             strict,
-                                             timeout)
-        self.servercert_file = servercert_file
-
-    # overwrites the original version of httplib (python 2.6)
-    def connect(self):
-        """Connect to a host on a given (SSL) port."""
-
-        sock = socket.create_connection((self.host, self.port), self.timeout)
-        if self._tunnel_host:
-            self.sock = sock
-            self._tunnel()
-
-        # the only thing that has to be changed in the original function from
-        # httplib (tell ssl.wrap_socket to verify server certificate)
-        self.sock = ssl.wrap_socket(sock,
-                                    self.key_file,
-                                    self.cert_file,
-                                    cert_reqs=ssl.CERT_REQUIRED,
-                                    ca_certs=self.servercert_file)
 
 
 class GoogleFirebase:
@@ -62,7 +30,7 @@ class GoogleFirebase:
         # Get global configured data.
         self.global_data = global_data
         self.logger = self.global_data.logger
-        self.google_cert_file = self.global_data.google_cert_file
+        self.google_firebase_url = self.global_data.google_firebase_url
         self.google_auth_key = self.global_data.google_auth_key
 
     def _send_message(self, message):
@@ -74,19 +42,21 @@ class GoogleFirebase:
         }
 
         # Send message to google service.
-        response = None
+        r = None
         try:
-            conn = VerifiedHTTPSConnection("fcm.googleapis.com", 443, self.google_cert_file)
-            conn.request("POST", "/fcm/send", json.dumps(message), headers)
-            response = conn.getresponse()
+            r = requests.post(self.google_firebase_url,
+                              verify=True,
+                              data=json.dumps(message),
+                              headers=headers)
+
         except Exception as e:
             self.logger.exception("[%s]: Sending message to google service " % self.file_name +
                                   "failed (%s:%d)." % (self.client_addr, self.client_port))
             return ErrorCodes.GOOGLE_CONNECTION
 
         # Check if sending message was successful.
-        status = response.status
-        recv_string = response.read()
+        status = r.status_code
+        recv_string = r.text
         if status == 200:
             self.logger.debug("[%s]: Sending message to google service " % self.file_name +
                               "successful (%s:%d)." % (self.client_addr, self.client_port))

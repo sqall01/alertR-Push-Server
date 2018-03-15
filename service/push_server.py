@@ -22,16 +22,16 @@ import _thread
 # alertR Push Notification Server needs the following additional python3 packages:
 # - bcrypt
 # - mysqlclient
+# - requests
 #
 # In order to install them on a Debian like machine please execute the following commands:
 #
 # apt-get install libmysqlclient-dev
-# pip3 install bcrypt mysqlclient
+# pip3 install bcrypt mysqlclient requests
 
-# Global instances used to access it via terminate signal handler.
+# Global instances used to access them via terminate signal handler.
 server = None
 db_cleaner = None
-
 
 # Function creates a path location for the given user input.
 def make_path(input_location):
@@ -44,11 +44,9 @@ def make_path(input_location):
     # Assume we have a given relative path.
     return os.path.dirname(os.path.abspath(__file__)) + "/" + input_location
 
-
 # Shutdown server gracefully.
 def shutdown_server(server_obj):
     server_obj.shutdown()
-
 
 # Signal handler to gracefully shutdown the server.
 def sigterm_handler(signum, frame):
@@ -59,6 +57,7 @@ def sigterm_handler(signum, frame):
 
     if db_cleaner:
         db_cleaner.shutdown()
+
 
 if __name__ == "__main__":
 
@@ -144,11 +143,7 @@ if __name__ == "__main__":
 
         # Get google firebase configuration.
         global_data.logger.debug("[%s]: Parsing google firebase configuration." % file_name)
-        global_data.google_cert_file = make_path(str(configRoot.find("general").find("google").attrib["certFile"]))
         global_data.google_auth_key = str(configRoot.find("general").find("google").attrib["authKey"])
-
-        if not os.path.exists(global_data.google_cert_file):
-            raise ValueError("Google server certificate does not exist.")
 
         # Get mysql server configuration.
         global_data.logger.debug("[%s]: Parsing database configuration." % file_name)

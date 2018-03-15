@@ -73,8 +73,8 @@ class GlobalData:
         self.bf_block_time = None
 
         # Settings for google firebase service.
+        self.google_firebase_url = "https://fcm.googleapis.com//fcm/send"
         self.google_auth_key = None
-        self.google_cert_file = None
 
         # Amount of days the statistics are kept in the database.
         self.statistics_life_span = 0
