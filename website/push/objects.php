@@ -18,7 +18,7 @@ abstract class ErrorCodes {
     const GOOGLE_AUTH = 7;
     const VERSION_MISSMATCH = 8;
     const NO_NOTIFICATION_PERMISSION = 9;
-    const PHP_BRIDGE_ERROR = 10;
+    const WEB_BRIDGE_ERROR = 10;
 }
 
 ?>

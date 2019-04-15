@@ -11,8 +11,6 @@
 require_once("../config/config.php");
 require_once("./objects.php");
 
-$config_push_socket = "/tmp/alertrsocket.sock";
-
 // Open connection to local unix socket server of push service.
 @$fd = stream_socket_client("unix://" . $config_push_socket,
                             $errno,
@@ -22,7 +20,7 @@ $config_push_socket = "/tmp/alertrsocket.sock";
 // Check if connection could be established.
 if ($errno != 0) {
     $result = array();
-    $result["code"] = ErrorCodes::PHP_BRIDGE_ERROR;
+    $result["code"] = ErrorCodes::WEB_BRIDGE_ERROR;
     $result["reason"] = $errstr;
     die(json_encode($result));
 }
@@ -40,7 +38,7 @@ if(isset($_POST["data"])) {
 else {
     fclose($fd);
     $result = array();
-    $result["code"] = ErrorCodes::PHP_BRIDGE_ERROR;
+    $result["code"] = ErrorCodes::WEB_BRIDGE_ERROR;
     $result["reason"] = "POST variable data not set.";
     die(json_encode($result));
 }

@@ -21,7 +21,7 @@ class ErrorCodes:
     GOOGLE_AUTH = 7
     VERSION_MISSMATCH = 8
     NO_NOTIFICATION_PERMISSION = 9
-    PHP_BRIDGE_ERROR = 10
+    WEB_BRIDGE_ERROR = 10
 
 
 class AclCodes:
