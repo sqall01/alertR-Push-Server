@@ -2,7 +2,7 @@
 
 # written by sqall
 # twitter: https://twitter.com/sqall01
-# blog: http://blog.h4des.org
+# blog: https://h4des.org
 # github: https://github.com/sqall01
 #
 # Licensed under the GNU Affero General Public License, version 3.
@@ -51,19 +51,19 @@ class GoogleFirebase:
 
         except Exception as e:
             self.logger.exception("[%s]: Sending message to google service " % self.file_name +
-                                  "failed (%s:%d)." % (self.client_addr, self.client_port))
+                                  "failed (%s:%s)." % (self.client_addr, self.client_port))
             return ErrorCodes.GOOGLE_CONNECTION
 
         # Check if sending message was successful.
         status = r.status_code
         recv_string = r.text
         if status == 200:
-            self.logger.debug("[%s]: Sending message to google service " % self.file_name +
-                              "successful (%s:%d)." % (self.client_addr, self.client_port))
+            self.logger.info("[%s]: Sending message to google service " % self.file_name +
+                              "successful (%s:%s)." % (self.client_addr, self.client_port))
             return ErrorCodes.NO_ERROR
 
         self.logger.error("[%s]: Sending message to google service " % self.file_name +
-                          "failed (%s:%d)." % (self.client_addr, self.client_port))
+                          "failed (%s:%s)." % (self.client_addr, self.client_port))
 
         # Check if we do know the received error.
         if status == 400:
@@ -93,7 +93,7 @@ class GoogleFirebase:
         }
 
         self.logger.debug("[%s]: Sending message directly to google service " % self.file_name +
-                          "(%s:%d)." % (self.client_addr, self.client_port))
+                          "(%s:%s)." % (self.client_addr, self.client_port))
 
         return self._send_message(message)
 
@@ -116,7 +116,7 @@ class GoogleFirebase:
         }
 
         self.logger.debug("[%s]: Sending message with data id '%s' to google service " % (self.file_name, data_id) +
-                          "(%s:%d)." % (self.client_addr, self.client_port))
+                          "(%s:%s)." % (self.client_addr, self.client_port))
 
         return self._send_message(message)
 
@@ -126,6 +126,10 @@ class GoogleFirebase:
         # Build message body.
         payload = {"payload": data}
 
+        return self._send_data_direct(channel, data)
+
+        '''
+        TODO: large messages not yet implemented
         # Check if message is too large (2039 tested empirically).
         if len(json.dumps(payload)) >= 2039:
             return self._send_data_indirect(channel, data)
@@ -133,3 +137,4 @@ class GoogleFirebase:
         # Payload is small enough to be sent directly via Google Firebase.
         else:
             return self._send_data_direct(channel, data)
+        '''

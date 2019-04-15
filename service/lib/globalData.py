@@ -2,7 +2,7 @@
 
 # written by sqall
 # twitter: https://twitter.com/sqall01
-# blog: http://blog.h4des.org
+# blog: https://h4des.org
 # github: https://github.com/sqall01
 #
 # Licensed under the GNU Affero General Public License, version 3.
@@ -21,6 +21,7 @@ class ErrorCodes:
     GOOGLE_AUTH = 7
     VERSION_MISSMATCH = 8
     NO_NOTIFICATION_PERMISSION = 9
+    PHP_BRIDGE_ERROR = 10
 
 
 class AclCodes:

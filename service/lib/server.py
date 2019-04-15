@@ -2,14 +2,11 @@
 
 # written by sqall
 # twitter: https://twitter.com/sqall01
-# blog: http://blog.h4des.org
+# blog: https://h4des.org
 # github: https://github.com/sqall01
 #
 # Licensed under the GNU Affero General Public License, version 3.
 
-import ssl
-import socket
-import socketserver
 import os
 import json
 from .storage import Mysql
@@ -22,8 +19,8 @@ BUFSIZE = 4096
 # This class handles the communication with the incoming client connection.
 class ClientCommunication:
 
-    def __init__(self, ssl_socket, client_addr, client_port, global_data):
-        self.ssl_socket = ssl_socket
+    def __init__(self, socket, client_addr, client_port, global_data):
+        self.socket = socket
         self.client_addr = client_addr
         self.client_port = client_port
 
@@ -69,22 +66,25 @@ class ClientCommunication:
             message = {"Code": error_code}
             if error_code == ErrorCodes.VERSION_MISSMATCH:
                 message["version"] = self.server_version
-            self.ssl_socket.send(json.dumps(message).encode('ascii'))
+            self.socket.send(json.dumps(message).encode('ascii'))
         except:
             pass
 
     def handle_communication(self):
 
-        self.ssl_socket.settimeout(self.server_receive_timeout)
+        self.socket.settimeout(self.server_receive_timeout)
 
         # Get message from client.
         message = {}
+        data = None
         try:
-            data = self.ssl_socket.recv(BUFSIZE)
+            data = self.socket.recv(BUFSIZE)
             message = json.loads(data.decode("ascii"))
         except:
             self.logger.exception("[%s]: Receiving data " % self.file_name +
-                                  "failed (%s:%d)." % (self.client_addr, self.client_port))
+                                  "failed (%s:%s)." % (self.client_addr, self.client_port))
+            if data is not None:
+                self.logger.debug("[%s]: Received data: %s" % (self.file_name, data.decode("ascii")))
             return
 
         # Check the sanity of the message.
@@ -98,7 +98,7 @@ class ClientCommunication:
         if int(self.server_version * 10) != int(client_version * 10):
             self.logger.error("[%s]: Protocol version not compatible. " % self.file_name +
                               "Client has protocol version: '%.3f' " % client_version +
-					          "and server has '%.3f' (%s:%d)" %
+                              "and server has '%.3f' (%s:%s)" %
                               (self.server_version, self.client_addr, self.client_port))
             self._send_error(ErrorCodes.VERSION_MISSMATCH)
             return
@@ -118,7 +118,7 @@ class ClientCommunication:
             self._send_error(ErrorCodes.AUTH_ERROR)
             return
 
-        self.logger.info("[%s]: Successfully authenticated %s (%s:%d)." %
+        self.logger.info("[%s]: Successfully authenticated %s (%s:%s)." %
                          (self.file_name, username, self.client_addr, self.client_port))
 
         # Get acl of user.
@@ -148,96 +148,12 @@ class ClientCommunication:
         if self.statistics_life_span != 0:
             error = self.storage.add_send_statistic(username, self.client_addr, channel)
             if error != ErrorCodes.NO_ERROR:
-                self.logger.error("[%s]: Not able to add send statistics data (%s:%d)." %
+                self.logger.error("[%s]: Not able to add send statistics data (%s:%s)." %
                                   (self.file_name, self.client_addr, self.client_port))
 
         # Send success back.
         try:
             message = {"Code": ErrorCodes.NO_ERROR}
-            self.ssl_socket.send(json.dumps(message).encode('ascii'))
-        except:
-            pass
-
-
-# This class is used for the forked tcp server and extends the constructor
-# to pass the global configured data to all threads.
-class ForkedTCPServer(socketserver.ForkingMixIn, socketserver.TCPServer):
-
-    def __init__(self, global_data, server_address, request_handler_class):
-
-        # Get reference to global data object.
-        self.global_data = global_data
-
-        socketserver.TCPServer.__init__(self, server_address, request_handler_class)
-
-
-# This class is used for incoming client connections.
-class ServerSession(socketserver.BaseRequestHandler):
-
-    def __init__(self, request, client_address, server):
-
-        # File name of this file (used for logging).
-        self.file_name = os.path.basename(__file__)
-
-        # ssl socket wrapper.
-        self.ssl_socket = None
-
-        # Instance that handles the communication with the client.
-        self.client_comm = None
-
-        # Get client ip address and port.
-        self.client_addr = client_address[0]
-        self.client_port = client_address[1]
-
-        # Get reference to global data object.
-        self.global_data = server.global_data
-        self.logger = self.global_data.logger
-
-        # Get server certificate/key file.
-        self.server_cert_file = self.global_data.server_cert_file
-        self.server_key_file = self.global_data.server_key_file
-
-        socketserver.BaseRequestHandler.__init__(self, request, client_address, server)
-
-    def handle(self):
-
-        self.logger.info("[%s]: Client connected (%s:%d)." % (self.file_name, self.client_addr, self.client_port))
-
-        # Try to initiate ssl with client.
-        try:
-            self.ssl_socket = ssl.wrap_socket(self.request,
-                                              server_side=True,
-                                              certfile=self.server_cert_file,
-                                              keyfile=self.server_key_file,
-                                              ssl_version=ssl.PROTOCOL_TLSv1)
-
-        except:
-            self.logger.exception("[%s]: Unable to initialize SSL " % self.file_name +
-                                  "connection (%s:%d)." % (self.client_addr, self.client_port))
-            return
-
-        # Give incoming connection to client communication handler.
-        self.client_comm = ClientCommunication(self.ssl_socket, self.client_addr, self.client_port, self.global_data)
-        self.client_comm.handle_communication()
-
-        # Close ssl connection gracefully.
-        try:
-            # self.sslSocket.shutdown(socket.SHUT_RDWR)
-            self.ssl_socket.close()
-        except:
-            self.logger.exception("[%s]: Unable to close SSL " % self.file_name +
-                                  "connection gracefully with %s:%d." % (self.client_addr, self.client_port))
-
-        self.logger.info("[%s]: Client disconnected (%s:%d)." % (self.file_name, self.client_addr, self.client_port))
-
-    def close_connection(self):
-        self.logger.info("[%s]: Closing connection to " % self.file_name +
-                         "client (%s:%d)." % (self.client_addr, self.client_port))
-        try:
-            self.ssl_socket.shutdown(socket.SHUT_RDWR)
-        except:
-            pass
-        try:
-            self.ssl_socket.close()
+            self.socket.send(json.dumps(message).encode('ascii'))
         except:
             pass

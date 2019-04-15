@@ -2,11 +2,12 @@
 
 # written by sqall
 # twitter: https://twitter.com/sqall01
-# blog: http://blog.h4des.org
+# blog: https://h4des.org
 # github: https://github.com/sqall01
 #
 # Licensed under the GNU Affero General Public License, version 3.
 
+from lib import ServerSessionNoTLS, ForkedUnixServer, UnixServerWrapper
 from lib import ServerSession, ForkedTCPServer
 from lib import GlobalData
 from lib import Mysql
@@ -31,6 +32,7 @@ import _thread
 
 # Global instances used to access them via terminate signal handler.
 server = None
+unixserver = None
 db_cleaner = None
 
 # Function creates a path location for the given user input.
@@ -54,6 +56,7 @@ def sigterm_handler(signum, frame):
         # Shutdown has to be done via another thread. Otherwise a
         # deadlock will occur.
         _thread.start_new_thread(shutdown_server, (server,))
+        _thread.start_new_thread(shutdown_server, (unixserver,))
 
     if db_cleaner:
         db_cleaner.shutdown()
@@ -141,6 +144,8 @@ if __name__ == "__main__":
         if global_data.statistics_life_span < 0:
             raise ValueError("Statistics life span is not valid.")
 
+        unixsocket = make_path(str(configRoot.find("general").find("unixserver").attrib["socketFile"]))
+
         # Get google firebase configuration.
         global_data.logger.debug("[%s]: Parsing google firebase configuration." % file_name)
         global_data.google_auth_key = str(configRoot.find("general").find("google").attrib["authKey"])
@@ -168,6 +173,24 @@ if __name__ == "__main__":
     db_cleaner = DatabaseCleaner(global_data)
     db_cleaner.daemon = True
     db_cleaner.start()
+
+    # Start unix socket server process.
+    global_data.logger.info("[%s]: Starting unix socket server process." % file_name)
+    while True:
+        try:
+            os.unlink(unixsocket)
+            unixserver = ForkedUnixServer(global_data, unixsocket, ServerSessionNoTLS)
+
+            break
+        except:
+            global_data.logger.exception("[%s]: Starting unix socket server failed. " % file_name +
+                                         "Try again in 5 seconds.")
+            time.sleep(5)
+
+    # To start server_forever we execute a wrapper thread to not block this one.
+    unixserver_wrapper = UnixServerWrapper(unixserver, global_data.logger)
+    unixserver_wrapper.daemon = True
+    unixserver_wrapper.start()
 
     # Start server process.
     global_data.logger.info("[%s]: Starting server process." % file_name)

@@ -2,7 +2,7 @@
 
 # written by sqall
 # twitter: https://twitter.com/sqall01
-# blog: http://blog.h4des.org
+# blog: https://h4des.org
 # github: https://github.com/sqall01
 #
 # Licensed under the GNU Affero General Public License, version 3.
@@ -308,6 +308,9 @@ class Mysql(object):
 
     def clean_up_push_data_table(self, push_data_life_span, logger=None):
 
+        # TODO: large messages not yet implemented
+        return ErrorCodes.NO_ERROR
+
         # Set logger instance to use.
         if not logger:
             logger = self.logger
@@ -436,10 +439,13 @@ class Mysql(object):
 
                 logger.debug("[%s]: Delete inactive user with id %d." % (self.file_name, user_id))
 
+                '''
+                TODO: large messages not yet implemented
                 # Delete push_data of user.
                 self._cursor.execute("DELETE FROM push_data " +
                                      "WHERE users_id = %s",
                                      (user_id, ))
+                '''
 
                 # Delete bruteforce_info of user.
                 self._cursor.execute("DELETE FROM bruteforce_info " +
@@ -514,6 +520,9 @@ class Mysql(object):
         return acl, ErrorCodes.NO_ERROR
 
     def insert_push_data(self, username, data, logger=None):
+
+        # TODO: large messages not yet implemented
+        return 0, ErrorCodes.NO_ERROR
 
         # Set logger instance to use.
         if not logger:

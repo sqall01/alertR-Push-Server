@@ -44,6 +44,13 @@
 			statisticsLifeSpan="1" />
 
 		<!--
+			the settings for the local unix socket server
+			socketFile - file location for the unix socket file.
+		-->
+		<unixserver
+			socketFile="/tmp/alertrsocket.sock" />
+
+		<!--
 			the settings for the google firebase server
 			authKey - HTTP header entry that is needed for the authentication
 				at the google firebase servers. An entry has typically the
