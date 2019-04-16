@@ -19,6 +19,6 @@ $config_mysql_port = 3306;
 // mysql> GRANT ALL ON alertr_push.* TO 'alertr_push'@'localhost';
 
 // File location of unix socket server file of push service.
-$config_push_socket = "/tmp/alertrpush.socket";
+$config_push_socket = "/tmp/alertrpush.sock";
 
 ?>
