@@ -1,90 +1,91 @@
 <?xml version="1.0"?>
 
 <!--
-	this is a template configuration file
-	please rename this template to "config.xml" if you want to use it
-	for the server
+    this is a template configuration file
+    please rename this template to "config.xml" if you want to use it
+    for the server
 -->
 <config version="0.100">
 
-	<!--
-		in this section general options are configured
-	-->
-	<general>
+    <!--
+        in this section general options are configured
+    -->
+    <general>
 
-		<!--
-			the settings for the logfile
-			dir - absolute path to the directory for the logfiles
-			level - valid log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
-		-->
-		<log
-			dir="./logdir/"
-			level="DEBUG" />
+        <!--
+            the settings for the logfile
+            dir - absolute path to the directory for the logfiles
+            level - valid log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+        -->
+        <log
+            dir="./logdir/"
+            level="DEBUG" />
 
-		<!--
-			the settings for the server
-			certFile - path to the certificate file of the server
-				that is used for the SSL connection
-			keyFile - path to the key file of the server that is used for
-				the SSL connection
-			port - port that is used by the server
-			bruteforceLoginAttempts - the number of allowed failed
-				login attempts before the ip address is blocked
-			bruteforceBlockTime - how long the ip address is blocked
-				(in seconds)
-			statisticsLifeSpan - number of days the server should hold
-				statistic data in the database (0 disables statistics)
-		-->
-		<server
-			certFile="/absolute/path/to/server.crt"
-			keyFile="/absolute/path/to/server.key"
-			port="14944"
-			bruteforceLoginAttempts="3"
-			bruteforceBlockTime="60"
-			statisticsLifeSpan="1" />
+        <!--
+            the settings for the server
+            certFile - path to the certificate file of the server
+                that is used for the SSL connection
+            keyFile - path to the key file of the server that is used for
+                the SSL connection
+            port - port that is used by the server
+            bruteforceLoginAttempts - the number of allowed failed
+                login attempts before the ip address is blocked
+            bruteforceBlockTime - how long the ip address is blocked
+                (in seconds)
+            statisticsLifeSpan - number of days the server should hold
+                statistic data in the database (0 disables statistics)
+        -->
+        <server
+            certFile="/absolute/path/to/server.crt"
+            keyFile="/absolute/path/to/server.key"
+            port="14944"
+            bruteforceLoginAttempts="3"
+            bruteforceBlockTime="60"
+            statisticsLifeSpan="1" />
 
-		<!--
-			the settings for the local unix socket server
-			socketFile - file location for the unix socket file.
-		-->
-		<unixserver
-			socketFile="/tmp/alertrsocket.sock" />
+        <!--
+            the settings for the local unix socket server
+            socketFile - file location for the unix socket file needed
+                by the web bridge.
+        -->
+        <unixserver
+            socketFile="/tmp/alertrsocket.sock" />
 
-		<!--
-			the settings for the google firebase server
-			authKey - HTTP header entry that is needed for the authentication
-				at the google firebase servers. An entry has typically the
-				following form:
-				"key=AAAAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCCCCCC"
-		-->
-		<google
-			authKey="key=AAAAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCCCCCC" />
+        <!--
+            the settings for the google firebase server
+            authKey - HTTP header entry that is needed for the authentication
+                at the google firebase servers. An entry has typically the
+                following form:
+                "key=AAAAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCCCCCC"
+        -->
+        <google
+            authKey="key=AAAAAAAAAAAABBBBBBBBBBCCCCCCCCCCCCCCCCC" />
 
-	</general>
+    </general>
 
-	<!--
-		in this section options for the storage are configured
-	-->
-	<storage>
+    <!--
+        in this section options for the storage are configured
+    -->
+    <storage>
 
-		<!--
-			the settings for the mysql backend
-			server - the address of the database server
-			port - the port of the database server
-				(default value mysql uses is 3306)
-			database - the name of the database
-			username - the username for the database server
-			password - the password for the database server
-			connectionRetries - number of retries if a connection times out
-		-->
-		<mysql
-			server="127.0.0.1"
-			port="3306"
-			database="alertr_push"
-			username="root"
-			password="root"
-			connectionRetries="5" />
+        <!--
+            the settings for the mysql backend
+            server - the address of the database server
+            port - the port of the database server
+                (default value mysql uses is 3306)
+            database - the name of the database
+            username - the username for the database server
+            password - the password for the database server
+            connectionRetries - number of retries if a connection times out
+        -->
+        <mysql
+            server="127.0.0.1"
+            port="3306"
+            database="alertr_push"
+            username="root"
+            password="root"
+            connectionRetries="5" />
 
-	</storage>
+    </storage>
 
 </config>
