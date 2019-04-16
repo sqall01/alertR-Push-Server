@@ -178,7 +178,8 @@ if __name__ == "__main__":
     global_data.logger.info("[%s]: Starting unix socket server process." % file_name)
     while True:
         try:
-            os.unlink(unixsocket)
+            if os.path.exists(unixsocket):
+                os.unlink(unixsocket)
             unixserver = ForkedUnixServer(global_data, unixsocket, ServerSessionNoTLS)
 
             break
