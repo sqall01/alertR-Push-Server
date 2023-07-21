@@ -26,6 +26,8 @@ class ErrorCodes:
 
 class AclCodes:
     NOTIFICATION_CHANNEL = 0
+    CHASR_MID_DEVICES = 1
+    CHASR_MAX_DEVICES = 2
 
 
 # This class is a global configuration class that holds
@@ -35,7 +37,7 @@ class GlobalData:
     def __init__(self):
 
         # Version of the used server (and protocol).
-        self.version = 0.100
+        self.version = 0.101
 
         # Revision of the used server.
         self.rev = 0
@@ -51,7 +53,7 @@ class GlobalData:
 
         # Information concerning logging instances.
         self.logger = None
-        self.logdir = None
+        self.logdir = "STDOUT"
         self.loglevel = None
 
         # Needed mysql parameters.

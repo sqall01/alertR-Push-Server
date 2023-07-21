@@ -5,7 +5,7 @@
     please rename this template to "config.xml" if you want to use it
     for the server
 -->
-<config version="0.100">
+<config version="0.101">
 
     <!--
         in this section general options are configured
@@ -14,7 +14,8 @@
 
         <!--
             the settings for the logfile
-            dir - absolute path to the directory for the logfiles
+            dir - path to the directory for the logfiles (if set to dir="STDOUT" then the log will be outputed to stdout
+                instead of written into a file)
             level - valid log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
         -->
         <log
@@ -47,9 +48,11 @@
             the settings for the local unix socket server
             socketFile - file location for the unix socket file needed
                 by the web bridge.
+            socketPermission - permissione octet which is used for the unix socket file
         -->
         <unixserver
-            socketFile="/tmp/alertrsocket.sock" />
+            socketFile="/tmp/alertrsocket.sock"
+            socketPermission="770" />
 
         <!--
             the settings for the google firebase server

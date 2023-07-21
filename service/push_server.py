@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # written by sqall
 # twitter: https://twitter.com/sqall01
@@ -77,7 +77,9 @@ if __name__ == "__main__":
     try:
         configRoot = xml.etree.ElementTree.parse(global_data.config_file).getroot()
 
-        global_data.logdir = make_path(str(configRoot.find("general").find("log").attrib["dir"]))
+        logdir = str(configRoot.find("general").find("log").attrib["dir"])
+        if logdir.upper() != "STDOUT":
+            global_data.logdir = make_path(logdir)
 
         # parse chosen log level
         temp_loglevel = str(configRoot.find("general").find("log").attrib["level"])
@@ -96,18 +98,25 @@ if __name__ == "__main__":
             raise ValueError("No valid log level in config file.")
 
         # initialize logging
-        logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
-                            datefmt="%m/%d/%Y %H:%M:%S",
-                            filename=global_data.logdir + "/all.log",
-                            level=global_data.loglevel)
+        if global_data.logdir == "STDOUT":
+            logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                                datefmt="%m/%d/%Y %H:%M:%S",
+                                level=global_data.loglevel)
+        else:
+            logging.basicConfig(format="%(asctime)s %(levelname)s: %(message)s",
+                                datefmt="%m/%d/%Y %H:%M:%S",
+                                filename=global_data.logdir + "/all.log",
+                                level=global_data.loglevel)
 
         global_data.logger = logging.getLogger("server")
-        fh = logging.FileHandler(global_data.logdir + "/server.log")
-        fh.setLevel(global_data.loglevel)
-        log_format = logging.Formatter("%(asctime)s %(levelname)s: %(message)s",
-                                       "%m/%d/%Y %H:%M:%S")
-        fh.setFormatter(log_format)
-        global_data.logger.addHandler(fh)
+
+        if global_data.logdir.upper() != "STDOUT":
+            fh = logging.FileHandler(global_data.logdir + "/server.log")
+            fh.setLevel(global_data.loglevel)
+            log_format = logging.Formatter("%(asctime)s %(levelname)s: %(message)s",
+                                           "%m/%d/%Y %H:%M:%S")
+            fh.setFormatter(log_format)
+            global_data.logger.addHandler(fh)
 
     except Exception as e:
         print("Config could not be parsed.")
@@ -144,7 +153,8 @@ if __name__ == "__main__":
         if global_data.statistics_life_span < 0:
             raise ValueError("Statistics life span is not valid.")
 
-        unixsocket = make_path(str(configRoot.find("general").find("unixserver").attrib["socketFile"]))
+        unixsocket_file = make_path(str(configRoot.find("general").find("unixserver").attrib["socketFile"]))
+        unixsocket_permissions = int(configRoot.find("general").find("unixserver").attrib["socketPermission"], 8)
 
         # Get google firebase configuration.
         global_data.logger.debug("[%s]: Parsing google firebase configuration." % file_name)
@@ -178,9 +188,10 @@ if __name__ == "__main__":
     global_data.logger.info("[%s]: Starting unix socket server process." % file_name)
     while True:
         try:
-            if os.path.exists(unixsocket):
-                os.unlink(unixsocket)
-            unixserver = ForkedUnixServer(global_data, unixsocket, ServerSessionNoTLS)
+            if os.path.exists(unixsocket_file):
+                os.unlink(unixsocket_file)
+            unixserver = ForkedUnixServer(global_data, unixsocket_file, ServerSessionNoTLS)
+            os.chmod(unixsocket_file, unixsocket_permissions)
 
             break
         except:
